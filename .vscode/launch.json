@@ -1,0 +1,16 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "(WSL) Launch",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceRoot}/target/debug/advent_of_code",
+            "args": [],
+            "cwd": "${workspaceRoot}", 
+            "env": {
+                "RUST_LOG": "debug"
+            }
+        }
+    ]
+}
