@@ -1,60 +1,61 @@
 use log::{debug, info};
 use std::fs;
-use std::collections::HashSet;
+
+fn fuel_required(mass: &i32) -> i32 {
+    mass / 3 - 2
+}
+
+fn fuel_required_recursive(mass: &i32) -> i32 {
+    let fuel = fuel_required(mass);
+    if fuel < 9 { //rest is handled by wishing really hard
+        fuel
+    } else {
+        fuel + fuel_required_recursive(&fuel)
+    }
+}
 
 pub fn solve(input_file: &str){
+    let masses = parse(&input_file);
+
+    debug!("{:?}", masses);
+
+    part1(&masses);
+    part2(&masses);
+}
+
+fn parse(input_file: &str) -> Vec<i32> {
     let contents = fs::read_to_string(input_file)
         .expect("Something went wrong reading the file");
-    let changes = parse(&contents);
-
-    part1(&changes);
-    part2(&changes);
+    
+    contents.lines().map(|x| x.parse::<i32>().unwrap()).collect()
 }
 
-#[derive(Debug)]
-struct FrequencyChange{
-    pub direction: i8,
-    pub amount: i32
+fn part1(masses: &Vec<i32>) {
+    let total: i32 = masses.iter().map(fuel_required).sum();
+    info!("Total fuel required {}", total);
 }
 
-fn part1(changes: &Vec<FrequencyChange>) {
-    let mut total: i32 = 0;
-    for i in changes {
-        total = total + (i.direction as i32) * i.amount;
+fn part2(masses: &Vec<i32>) {
+    let total: i32 = masses.iter().map(fuel_required_recursive).sum();
+    info!("Total fuel required {}", total);
+}
+
+#[cfg(test)]
+mod tests{
+    use super::*;
+    
+    #[test]
+    fn test_fuel_required() {
+        assert_eq!(fuel_required(&12), 2);
+        assert_eq!(fuel_required(&14), 2);
+        assert_eq!(fuel_required(&1969), 654);
+        assert_eq!(fuel_required(&100756), 33583);
     }
-    info!("Final frequency is {}", total);
-}
 
-fn part2(changes: &Vec<FrequencyChange>) {
-    let mut total: i32 = 0;
-    let mut encountered: HashSet<i32> = HashSet::new();
-    'outer: loop {
-        for i in changes {
-            total = total + (i.direction as i32) * i.amount;
-            if encountered.contains(&total) {
-                break 'outer;
-            }
-            encountered.insert(total);
-        }
+    #[test]
+    fn test_fuel_required_recursive() {
+        assert_eq!(fuel_required_recursive(&14), 2);
+        assert_eq!(fuel_required_recursive(&1969), 966);
+        assert_eq!(fuel_required_recursive(&100756), 50346);
     }
-    info!("First duplicate frequency is {}", total)
-}
-
-fn parse(changes: &str) -> Vec<FrequencyChange> {
-    let mut parsed: Vec<FrequencyChange> = Vec::new();
-    for token in changes.split("\n"){
-        let mut direction: i8 = -1;
-        if &token[0..1] == "+" {
-            direction = 1;
-        }
-        let len = &token.len() + 0;
-        let amount: i32 = token[1..len].parse::<i32>().unwrap();
-        let change = FrequencyChange{
-            direction: direction,
-            amount: amount
-        };
-        debug!("{} {} {} {} {:?}", token, &token[1..len], len, direction, change);
-        parsed.push(change)
-    }
-    parsed
 }
