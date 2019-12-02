@@ -6,7 +6,7 @@
             "type": "lldb",
             "request": "launch",
             "program": "${workspaceRoot}/target/debug/advent_of_code",
-            "args": [],
+            "args": ["./inputs/day2/example"],
             "cwd": "${workspaceRoot}", 
             "env": {
                 "RUST_LOG": "debug"
