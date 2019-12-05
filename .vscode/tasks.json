@@ -4,7 +4,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "run debug",
+            "label": "rundebug",
             "type": "cargo",
             "subcommand": "run",
             "problemMatcher": [
@@ -17,7 +17,7 @@
             }
         },
         {
-            "label": "run info",
+            "label": "runinfo",
             "type": "cargo",
             "subcommand": "run",
             "problemMatcher": [
