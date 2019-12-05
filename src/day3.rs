@@ -1,4 +1,4 @@
-use log::{debug, info};
+use log::{debug, info, trace};
 use std::fs;
 use std::ops::AddAssign;
 use std::iter;
@@ -78,8 +78,8 @@ fn part1(wire1: &Wire, wire2: &Wire) {
     let origin = Point{x:0, y:0};
     let closest = intersections.min_by_key(|x| x.manhattan(&origin)).unwrap();
     let distance = origin.manhattan(closest);
-    debug!("{:?}", wire1);
-    debug!("{:?}", wire2);
+    trace!("{:?}", wire1);
+    trace!("{:?}", wire2);
     info!("distance {} {:?}", distance, closest);
 }
 
