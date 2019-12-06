@@ -1,114 +1,136 @@
 use log::{debug, info};
 use std::fs;
 use std::collections::*;
-use queues::*;
+use std::collections::hash_map::Entry;
 
-#[derive(Debug)]
-struct StarChart{
-    orbits: HashMap<String, HashSet<String>>
+#[derive(Clone, Eq, PartialEq, Debug)]
+struct Planet<'s> {
+    name: &'s str,
+    parent: Option<&'s str>,
+    children: Vec<&'s str>
 }
 
-impl StarChart{
+#[derive(Clone, Debug)]
+struct StarChart<'s> {
+    planets: HashMap<&'s str, Planet<'s>>
+}
 
-    fn orbits_of(&self, planet: String) -> Option<&HashSet<String>> {
-        self.orbits.get(&planet)
+impl<'s> StarChart<'s> {
+
+    fn get_planet(&self, planet: &'s str) -> Option<&'s Planet> {
+        self.planets.get(planet)
     }
 
-    fn parent_of(&self, planet: String) -> Option<String> {
-        for (parent, children) in self.orbits.iter() {
-            if children.contains(&planet) {
-                return Some(parent.to_owned())
-            }
-        }
-        None
+    fn parent_of(&self, planet: &'s str) -> Option<&'s str> {
+        self.planets.get(planet).map(|p| p.parent).unwrap_or(None)
     }
 
-    fn path_to(&self, planet: String) -> Vec<String> {
-        let mut path: Vec<String> = vec![];
-        let mut current = planet;
-        loop {
-            let parent = self.parent_of(current);
-            if parent.is_none() {
-                break;
-            } else {
-                current = parent.unwrap();
-                path.push(current.clone());
-            }
-        }
-        path.reverse();
-        path
-    }
+    fn from_string(contents: &str) -> StarChart {
+        let mut planets = HashMap::<&str, Planet>::new();
 
-    fn from_file(input_file: &str) -> StarChart {
-        let contents = fs::read_to_string(input_file)
-            .expect("Something went wrong reading the file");
-        
-        let mut orbits = HashMap::<String, HashSet<String>>::new();
+        contents
+            .lines()
+            .for_each(|x| {
+                let bodies: Vec<&str> = x.split(")").take(2).collect();
 
-        contents.split("\n").for_each(|x| {
-            let bodies: Vec<&str> = x.split(")").take(2).collect();
-            let body1 = bodies[0].to_owned();
-            let body2 = bodies[1].to_owned();
-            if !orbits.contains_key(&body1) {
-                let mut planets = HashSet::new();
-                planets.insert(body2);
-                orbits.insert(body1, planets);
-            } else {
-                let body_orbits = orbits.get_mut(bodies[0]).unwrap();
-                body_orbits.insert(body2);
-            }
-        });
+                let planet = bodies[0];
+                let orbiter = bodies[1];
+                
+                match planets.entry(planet) {
+                    Entry::Occupied(slot) => {
+                        slot.into_mut().children.push(orbiter);
+                    }
+                    Entry::Vacant(slot) => {
+                        slot.insert(Planet{
+                            name: planet,
+                            parent: None,
+                            children: vec![orbiter]
+                        });
+                    }
+                }
+                
+                match planets.entry(orbiter) {
+                    Entry::Occupied(slot) => {
+                        slot.into_mut().parent = Some(planet);
+                    }
+                    Entry::Vacant(slot) => {
+                        slot.insert(Planet{
+                            name: orbiter,
+                            parent: Some(planet),
+                            children: Vec::new()
+                        });
+                    }
+                }
+            });
 
         StarChart{
-            orbits: orbits
+            planets: planets
         }
     }
 }
 
 pub fn solve(input_file: &str){
-    let input = StarChart::from_file(&input_file);
-    debug!("{:?}", input);
+    let contents: String = fs::read_to_string(input_file)
+        .expect("Something went wrong reading the file");
+
+    let input = StarChart::from_string(&contents);
 
     part1(&input);
     part2(&input);
 }
 
 fn part1(input: &StarChart) {
-    let mut distances = HashMap::<String, usize>::new();
-    let root = String::from("COM");
-    let mut buffer = queue![root.to_owned()];
-    distances.insert(root.to_owned(), 0);
+    fn walk<'s>(
+        star_chart: &StarChart,
+        current_planet: &'s str,
+        current_depth: usize
+    ) -> usize {
+        let children_total = star_chart
+            .get_planet(current_planet)
+            .map(|x| x
+                .children.iter()
+                .map(|child| walk(star_chart, child, current_depth + 1))
+                .sum()
+            )
+            .unwrap_or(0);
 
-    while buffer.size() > 0 {
-        let parent = buffer.remove().expect("buffer empty!");
-        let distance = distances.get(&parent).unwrap() + 1;
-
-        input
-            .orbits_of(parent)
-            .map(|x| x.iter().for_each(|to_add| {
-                buffer.add(to_add.to_owned()).expect("queue full??");
-                distances.insert(to_add.to_owned(), distance);
-            }));
+        current_depth + children_total
     }
-    debug!("{:?}", distances);
-    let total: usize = distances.values().sum();
+
+    let total = walk(input, "COM", 0);
+
     info!("Total orbital distances {}", total);
 }
 
 fn part2(input: &StarChart) {
-    let santa_path = input.path_to(String::from("SAN"));
-    let you_path = input.path_to(String::from("YOU"));
-    debug!("{:?}", santa_path);
-    debug!("{:?}", you_path);
+    fn path_to<'s>(
+        input: &'s StarChart, 
+        planet: &'s str
+    ) -> Vec<&'s str> {
+        let mut path: Vec<&'s str> = vec![];
+        let mut current = planet;
+
+        loop {
+            if let Some(parent) = input.parent_of(current) {
+                current = parent;
+                path.push(current.clone());
+            } else {
+                break;
+            }
+        }
+        
+        path.reverse();
+        path
+    }
+
+    let santa_path = path_to(input, "SAN");
+    let you_path = path_to(input, "YOU");
+    
     let common_path_length: usize = santa_path.iter()
         .zip(you_path.iter())
         .take_while(|(s, y)| s == y)
         .count();
     let path_to_santa = santa_path.len() + you_path.len() - 2 * common_path_length;
-    info!("Number of orbital transfers to get to santa {}", path_to_santa);
-}
 
-#[cfg(test)]
-mod tests{
-    use super::*;
+    info!("Number of orbital transfers to get to santa {}", path_to_santa);
 }
