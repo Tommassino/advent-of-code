@@ -119,7 +119,7 @@ fn part1(input: &Map) -> Point {
         })
         .unwrap();
     let total_visible = input.list_visible(best_position).len();
-    println!("Best position is {:?} that sees {} total other roids", best_position, total_visible);
+    info!("Best position is {:?} that sees {} total other roids", best_position, total_visible);
     best_position.clone()
 }
 
@@ -135,7 +135,6 @@ fn part2(input: &mut Map, station: &Point) {
         //WTF no Ord for f64??
         targets.sort_by_key(|x| {
             let angle = x.ord(station, &up);
-            debug!("angle between {:?} and {:?}: {}", station, x, angle);
             angle
         });
         let to_destroy = targets.iter().take(200 - took);
@@ -143,7 +142,7 @@ fn part2(input: &mut Map, station: &Point) {
             input.destroy(&roid);
             took += 1;
             solution = roid.x * 100 + roid.y;
-            info!("Destroying roid {}: {:?}", took, roid);
+            debug!("Destroying roid {}: {:?}", took, roid);
         });
         if took >= 200 {
             break;
