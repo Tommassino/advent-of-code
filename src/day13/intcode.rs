@@ -102,7 +102,7 @@ impl From<usize> for ParameterMode{
 
 #[derive(Debug)]
 pub struct Computer{
-    memory: Vec<i128>,
+    pub memory: Vec<i128>,
     pc: usize,
     pub state: ComputerState,
     input: Option<Rc<RefCell<Stream>>>,
@@ -285,7 +285,7 @@ impl Stream{
         self.data.push_back(value)
     }
 
-    pub fn into_vec(self) -> Vec<i128> {
+    fn into_vec(self) -> Vec<i128> {
         self.data.into()
     }
 }
