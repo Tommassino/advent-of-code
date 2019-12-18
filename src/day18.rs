@@ -58,26 +58,30 @@ impl Point{
 
 #[derive(Clone, Debug)]
 pub struct Canvas {
-    paint: HashMap<(isize, isize), char>
+    paint: HashMap<Point, char>
 }
 
 impl Canvas {
     fn new() -> Canvas {
         Canvas{
-            paint: HashMap::<(isize, isize), char>::new()
+            paint: HashMap::new()
         }
     }
 
     fn paint(&mut self, x: isize, y: isize, color: char) {
-        self.paint.insert((x, y), color);
+        self.paint.insert(Point::new(x, y), color);
+    }
+
+    fn paint_at(&mut self, pos: Point, color: char) {
+        self.paint.insert(pos, color);
     }
 
     fn color_at(&self, x: isize, y: isize) -> char {
-        *self.paint.get(&(x, y)).unwrap_or(&' ')
+        self.color_at_point(&Point::new(x, y))
     }
 
     fn color_at_point(&self, point: &Point) -> char {
-        self.color_at(point.x, point.y)
+        *self.paint.get(point).unwrap_or(&' ')
     }
 }
 
@@ -103,10 +107,10 @@ impl FromStr for Canvas {
 
 impl Display for Canvas {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let min_x = *self.paint.keys().map(|(x, _)| x).min().unwrap();
-        let max_x = *self.paint.keys().map(|(x, _)| x).max().unwrap();
-        let min_y = *self.paint.keys().map(|(_, y)| y).min().unwrap();
-        let max_y = *self.paint.keys().map(|(_, y)| y).max().unwrap();
+        let min_x = self.paint.keys().map(|p| p.x).min().unwrap();
+        let max_x = self.paint.keys().map(|p| p.x).max().unwrap();
+        let min_y = self.paint.keys().map(|p| p.y).min().unwrap();
+        let max_y = self.paint.keys().map(|p| p.y).max().unwrap();
 
         let repr: String = (min_y..=max_y).map(|y| {
             let line: String = (min_x..=max_x).map(|x| {
@@ -138,46 +142,69 @@ fn part1(input: &Canvas) {
     println!("Best path is {} with order {}", distance, order);
 }
 
+fn part2(input: &Canvas) {
+    let mut canvas = input.clone();
+    let robot_position = canvas.paint.iter().find(|(_, c)| **c == '@').unwrap().0.to_owned();
+    canvas.paint_at(robot_position, '#');
+    canvas.paint_at(robot_position + Point::new(-1, 0), '#');
+    canvas.paint_at(robot_position + Point::new(1, 0), '#');
+    canvas.paint_at(robot_position + Point::new(0, -1), '#');
+    canvas.paint_at(robot_position + Point::new(0, 1), '#');
+    canvas.paint_at(robot_position + Point::new(1, 1), '@');
+    canvas.paint_at(robot_position + Point::new(-1, 1), '@');
+    canvas.paint_at(robot_position + Point::new(1, -1), '@');
+    canvas.paint_at(robot_position + Point::new(-1, -1), '@');
+    debug!("{}", canvas);
+    let (distance, order) = collect_all_keys(&canvas);
+    println!("Best path is {} with order {}", distance, order);
+}
+
 fn collect_all_keys(canvas: &Canvas) -> (usize, String) {
-    let mut points: HashMap<char, Point> = HashMap::new();
-
-    canvas.paint.iter()
-        .filter(|(_, value)| value.is_alphabetic() || **value == '@')
-        .for_each(|((x, y), value)| {
-            points.insert(*value, Point{x: *x, y: *y});
-        });
-
-    let keys: Vec<char> = points.keys()
-        .filter(|x| x.is_lowercase() || **x == '@')
-        .map(|x| x.to_owned()).collect();
     
-    let mut paths: HashMap<char, HashMap<char, (usize, String)>> = HashMap::new();
+    let mut paths: HashMap<Point, HashMap<Point, (usize, String)>> = HashMap::new();
 
-    for from in keys.iter() {
-        for to in keys.iter() {
-            if from >= to {
+    let keys: Vec<(Point, char)> = canvas.paint.iter()
+        .filter(|(_, value)| value.is_alphabetic() && value.is_lowercase())
+        .map(|(p, c)| (*p, *c)).collect();
+    
+    let robots: Vec<(Point, char)> = canvas.paint.iter()
+        .filter(|(_, value)| **value == '@')
+        .map(|(p, c)| (*p, *c)).collect();
+    
+    for (from_position, from) in keys.iter().chain(robots.iter()) {
+        for (to_position, to) in keys.iter() {
+            if *from != '@' && from >= to {
                 continue;
             }
 
-            let (distance, keys_required) = shortest_path(*from, *to, &points, &keys, input).unwrap();
-            debug!("{} -> {}: {} {:?}", from, to, distance, keys_required);
+            match shortest_path(*from_position, *to_position, canvas) {
+                Ok((distance, keys_required)) => {
+                    debug!("{} -> {}: {} {:?}", from, to, distance, keys_required);
 
-            if !paths.contains_key(from) {
-                paths.insert(*from, HashMap::new());
+                    if !paths.contains_key(from_position) {
+                        paths.insert(*from_position, HashMap::new());
+                    }
+                    paths.get_mut(from_position).unwrap().insert(*to_position, (distance, keys_required.clone()));
+                    if *from != '@' {
+                        if !paths.contains_key(to_position) {
+                            paths.insert(*to_position, HashMap::new());
+                        }
+                        paths.get_mut(to_position).unwrap().insert(*from_position, (distance, keys_required.clone()));
+                    }
+                },
+                Err(_) => {}
             }
-            paths.get_mut(from).unwrap().insert(*to, (distance, keys_required.clone()));
-            if !paths.contains_key(to) {
-                paths.insert(*to, HashMap::new());
-            }
-            paths.get_mut(to).unwrap().insert(*from, (distance, keys_required.clone()));
         }
     }
     
+    let key_map: HashMap<Point, char> = keys.iter().map(|(p, c)| (*p, *c)).collect();
+    let robot_positions: Vec<Point> = robots.iter().map(|(p, _)| *p).collect();
 
     collect_keys(
-        '@', 
+        robot_positions, 
         &String::from(""), 
-        &paths
+        &paths,
+        &key_map
     )
 }
 
@@ -188,62 +215,67 @@ cached_key! {
     Key = { 
         let mut keys: Vec<char> = keys_collected.chars().collect();
         keys.sort();
-        format!("{:?}{}", keys, current_location) 
+        format!("{:?}{:?}", keys, current_positions) 
     };
     fn collect_keys(
-        current_location: char,
+        current_positions: Vec<Point>,
         keys_collected: &String,
-        paths: &HashMap<char, HashMap<char, (usize, String)>>
-    ) -> (usize, String) = {
-        let paths_from = paths.get(&current_location).unwrap();
-    
-        let keys_left: Vec<char> = paths_from.keys()
-            .filter(|k| **k != '@')
-            .filter(|k| !keys_collected.chars().any(|c| c == **k))
-            .map(|x| *x)
-            .collect();
-    
-        if keys_left.is_empty() {
-            return (0, String::from(""));
-        }
-    
-        let (best_length, best_keys) = keys_left
-            .iter()
-            .flat_map(|key| {
-                let (segment_length, keys_required) = paths_from.get(key).unwrap();
-                let is_unlocked = keys_required.chars().all(|c| keys_collected.chars().any(|x| x == c));
-                if is_unlocked {
-                    let mut new_keys = keys_collected.clone();
-                    new_keys.push(*key);
-                    let (recursive_length, recursive_path) = collect_keys(*key, &new_keys, paths);
-                    let mut path = recursive_path.clone();
-                    path.insert(0, *key);
-                    Some((recursive_length + segment_length, path))
-                } else {
-                    None
-                }
+        paths: &HashMap<Point, HashMap<Point, (usize, String)>>,
+        key_positions: &HashMap<Point, char>
+    ) -> (usize, String) = { 
+        let maybe_result = current_positions.iter()
+            .flat_map(|from_position| {
+                let best_for_position = paths
+                    .get(from_position)
+                    .expect(&format!("No paths known for position {:?}", from_position))
+                    .iter()
+                    .filter(|(position, _)| {
+                        let key_name = key_positions.get(position).unwrap();
+                        !keys_collected.chars().any(|c| c == *key_name)
+                    })
+                    .flat_map(|(to_position, (segment_length, keys_required))| {
+                        let is_unlocked = keys_required.chars().all(|c| keys_collected.chars().any(|x| x == c));
+                        if is_unlocked {
+                            let mut new_positions = current_positions.clone();
+                            let from_idx = new_positions.iter().position(|x| x == from_position).unwrap();
+                            new_positions.remove(from_idx);
+                            new_positions.push(*to_position);
+
+                            let mut new_keys = keys_collected.clone();
+                            let key_name = key_positions.get(to_position).unwrap();
+                            new_keys.push(*key_name);
+
+                            let (recursive_length, recursive_path) = collect_keys(new_positions, &new_keys, paths, key_positions);
+                            let mut path = recursive_path.clone();
+                            path.insert(0, *key_name);
+                            Some((recursive_length + segment_length, path))
+                        } else {
+                            None
+                        }
+                    })
+                    .min_by_key(|x| x.0);
+
+                    best_for_position
             })
-            .min_by_key(|x| x.0)
-            .unwrap();
+            .min_by_key(|x| x.0);
     
-        (best_length, best_keys)
+        match maybe_result {
+            Some(result) => result,
+            None => (0, String::from(""))
+        }
     }
 }
 
 
 fn shortest_path(
-    from: char, 
-    to: char, 
-    locations: &HashMap<char, Point>, 
-    keys: &Vec<char>, 
+    from: Point, 
+    to: Point, 
     canvas: &Canvas
 ) -> Result<(usize, String), usize> {
     let mut visited: HashSet<Point> = HashSet::new();
     let mut queue: VecDeque<(Point, usize, String)> = VecDeque::new();
 
-    let from_location = locations.get(&from).unwrap().to_owned();
-    let to_location = locations.get(&to).unwrap().to_owned();
-    queue.push_back((from_location, 0, String::from("")));
+    queue.push_back((from, 0, String::from("")));
 
     while !queue.is_empty() {
         let (point, distance, keys_required) = queue.pop_back().unwrap();
@@ -255,17 +287,17 @@ fn shortest_path(
             point + Point::new(0, 1),
         ];
         candidates.sort_by_key(|p| {
-            - (*p - to_location).abs()
+            - (*p - to).abs()
         });
         
         for next_point in candidates.iter() {                
             let color = canvas.color_at_point(next_point);
-            if *next_point == to_location {
+            if *next_point == to {
                 return Ok((distance + 1, keys_required));
             }
             let is_passable = color != '#' && color != ' ';
             let was_visited = visited.contains(next_point);
-            let is_door = color.is_uppercase() && keys.contains(&color.to_ascii_lowercase());
+            let is_door = color.is_uppercase() && color.is_alphabetic();
             if is_passable && !was_visited {
                 let next_keys_required = 
                 if is_door {
@@ -284,9 +316,6 @@ fn shortest_path(
     Err(0)
 }
 
-fn part2(input: &Canvas) {
-}
-
 #[cfg(test)]
 mod tests{
     use super::*;
@@ -297,17 +326,15 @@ mod tests{
         let env = Env::new().filter_or("RUST_LOG", "debug");
         init_from_env(env);
         let contents = r#"
-########################
-#@..............ac.GI.b#
-###d#e#f################
-###A#B#C################
-###g#h#i################
-########################"#.trim();
+#############
+#DcBa.#.GhKl#
+#.###...#I###
+#e#d#.@.#j#k#
+###C#...###J#
+#fEbA.#.FgHi#
+#############"#.trim();
             
-        let input = Canvas::from_str(&contents).unwrap();
-        println!("{}", input);
-
-        let part1_time = Instant::now();
-        part1(&input);
+        let mut input = Canvas::from_str(&contents).unwrap();
+        part2(&mut input);
     }
 }
