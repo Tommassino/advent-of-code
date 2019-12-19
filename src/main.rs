@@ -4,10 +4,10 @@ use std::env;
 use env_logger;
 use std::time::Instant;
 
-mod day18;
+mod day19;
 
 fn main() {
     env_logger::init();
     let args: Vec<String> = env::args().collect();
-    day18::solve(&args[1]);
+    day19::solve(&args[1]);
 }
