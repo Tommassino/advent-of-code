@@ -1,8 +1,7 @@
 use log::{debug, info};
 use std::char;
 
-mod intcode;
-use intcode::*;
+use crate::common::intcode::*;
 
 struct SpringDroid{
     program: Program

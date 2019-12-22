@@ -28,7 +28,7 @@ impl Program{
 }
 
 #[derive(Debug)]
-pub enum OpCode{
+enum OpCode{
     Add,
     Multiply,
     Read,

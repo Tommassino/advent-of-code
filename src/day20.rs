@@ -1,111 +1,13 @@
 use log::{debug, info};
 use std::fs;
 use std::char;
-use std::fmt;
-use std::fmt::Display;
 use std::time::Instant;
-use std::convert::Infallible;
 use std::collections::HashMap;
-use std::collections::HashSet;
-use std::collections::VecDeque;
 use std::str::FromStr;
-use std::ops::Add;
-use std::ops::Sub;
 use std::cmp::min;
-use std::usize;
-use std::hash::Hash;
-use std::fmt::Debug;
-
-#[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
-pub struct Point{
-    x: isize,
-    y: isize
-}
-
-impl Add for Point {
-    type Output = Self;
-
-    fn add(self, other: Self) -> Self {
-        Self {
-            x: self.x + other.x,
-            y: self.y + other.y,
-        }
-    }
-}
-
-impl Sub for Point {
-    type Output = Self;
-
-    fn sub(self, other: Self) -> Self {
-        Self {
-            x: self.x - other.x,
-            y: self.y - other.y,
-        }
-    }
-}
-
-impl Point{
-    fn new(x: isize, y: isize) -> Point {
-        Point{
-            x: x,
-            y: y
-        }
-    }
-
-    fn abs(&self) -> isize {
-        self.x.abs() + self.y.abs()
-    }
-}
-
-
-#[derive(Clone, Debug)]
-pub struct Grid {
-    data: Vec<Vec<char>>,
-    width: usize,
-    height: usize
-}
-
-impl Grid {
-    fn set(&mut self, x: usize, y: usize, color: char) {
-        self.data[y][x] = color;
-    }
-
-    fn get(&self, x: usize, y: usize) -> Option<char> {
-        self.data.get(y).map(|a| a.get(x).map(|c| *c)).flatten()
-    }
-
-    fn get_unsafe(&self, x: usize, y: usize) -> char {
-        self.data.get(y).map(|a| a.get(x).map(|c| *c)).flatten().unwrap_or(' ')
-    }
-}
-
-impl FromStr for Grid {
-    type Err = Infallible;
-
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
-        let data: Vec<Vec<char>> = input
-            .lines()
-            .map(|line| line.chars().collect::<Vec<char>>())
-            .collect();
-        let width = data.iter().map(|a| a.len()).max().unwrap();
-        let height = data.len();
-        Ok(Grid{
-            data: data,
-            width: width,
-            height: height
-        })
-    }
-}
-
-impl Display for Grid {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let repr: String = self.data.iter().map(|line| {
-            let line_str: String = line.iter().collect();
-            format!("{}\n", line_str)
-        }).collect();
-        write!(f, "{}", repr)
-    }
-}
+use crate::common::graph::*;
+use crate::common::point::*;
+use crate::common::grid::*;
 
 #[derive(Debug, Clone)]
 struct PlutoMap{
@@ -180,11 +82,6 @@ impl PlutoMap{
     }
 }
 
-trait Neighbors<S>
-where S : Eq + Hash + Clone {
-    fn neighbors(&self, state: S) -> Vec<S>;
-}
-
 impl Neighbors<Point> for PlutoMap {
     fn neighbors(&self, point: Point) -> Vec<Point> {
         vec![
@@ -218,7 +115,7 @@ pub fn solve(input_file: &str){
 }
 
 fn part1(map: &PlutoMap) {
-    let (shortest, _) = shortest_path(map.start, map.finish, map).expect("No path found");
+    let (shortest, _) = bfs(map.start, map.finish, map).expect("No path found");
     println!("Solution is {}", shortest);
 }
 
@@ -280,40 +177,8 @@ fn part2(map: &PlutoMap) {
     let start = State::new(map.start, 0);
     let finish = State::new(map.finish, 0);
     println!("Routing from {:?} to {:?}", start, finish);
-    let (shortest, _) = shortest_path(start, finish, map).expect("No path found");
+    let (shortest, _) = bfs(start, finish, map).expect("No path found");
     println!("Solution is {}", shortest);
-}
-
-//BFS
-fn shortest_path<G, S>(
-    from: S, 
-    to: S, 
-    map: &G
-) -> Result<(usize, S), usize> 
-where S : Clone + Eq + Hash + Debug,
-G : Neighbors<S>
-{
-    let mut visited: HashSet<S> = HashSet::new();
-    let mut queue: VecDeque<(S, usize)> = VecDeque::new();
-
-    queue.push_back((from, 0));
-
-    while !queue.is_empty() {
-        let (point, distance) = queue.pop_front().unwrap();
-        //debug!("at {:?} after {} steps", point, distance);
-        
-        for next_point in map.neighbors(point) {
-            if next_point == to {
-                return Ok((distance + 1, next_point));
-            }
-            if !visited.contains(&next_point) {
-                visited.insert(next_point.clone());
-                queue.push_back((next_point.clone(), distance + 1));
-            }
-        }
-    }
-
-    Err(0)
 }
 
 #[cfg(test)]

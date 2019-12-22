@@ -4,6 +4,7 @@ use std::env;
 use env_logger;
 use std::time::Instant;
 
+mod common;
 mod day21;
 use day21::solve;
 
