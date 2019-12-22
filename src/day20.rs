@@ -13,6 +13,8 @@ use std::ops::Add;
 use std::ops::Sub;
 use std::cmp::min;
 use std::usize;
+use std::hash::Hash;
+use std::fmt::Debug;
 
 #[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
 pub struct Point{
@@ -176,8 +178,15 @@ impl PlutoMap{
             finish: *end
         }
     }
+}
 
-    fn neighbors(&self, point: Point) -> Vec<(Point, Option<String>)> {
+trait Neighbors<S>
+where S : Eq + Hash + Clone {
+    fn neighbors(&self, state: S) -> Vec<S>;
+}
+
+impl Neighbors<Point> for PlutoMap {
+    fn neighbors(&self, point: Point) -> Vec<Point> {
         vec![
             point + Point::new(-1, 0),
             point + Point::new(1, 0),
@@ -189,13 +198,7 @@ impl PlutoMap{
             color != '#' && color != ' '
         })
         .map(|p| {
-            self.portal_connections.get(p).map(|x| {
-                (*x, self.portals.get(p).map(|t| t.to_owned()))
-            }).unwrap_or((
-                *p, 
-                None,
-                //Some(format!("[{},{}]", p.x, p.y))
-            ))
+            self.portal_connections.get(p).map(|x| *x).unwrap_or(*p)
         }).collect()
     }
 }
@@ -215,36 +218,97 @@ pub fn solve(input_file: &str){
 }
 
 fn part1(map: &PlutoMap) {
-    let (shortest, trace) = shortest_path(map.start, map.finish, map).expect("No path found");
-    println!("Solution is {} with trace {}", shortest, trace);
+    let (shortest, _) = shortest_path(map.start, map.finish, map).expect("No path found");
+    println!("Solution is {}", shortest);
 }
 
-fn part2(input: &PlutoMap) {
+#[derive(Hash, Eq, PartialEq, Clone, Copy, Debug)]
+struct State{
+    position: Point,
+    recursion: isize
 }
 
+impl State{
+    fn new(position: Point, recursion: isize) -> State {
+        State{
+            position: position,
+            recursion: recursion
+        }
+    }
+}
 
+impl Neighbors<State> for PlutoMap{
+    fn neighbors(&self, state: State) -> Vec<State> {
+        vec![
+            state.position + Point::new(-1, 0),
+            state.position + Point::new(1, 0),
+            state.position + Point::new(0, -1),
+            state.position + Point::new(0, 1),
+        ].iter()
+        .filter(|p| {
+            let color = self.grid.get_unsafe(p.x as usize, p.y as usize);
+            color != '#' && color != ' '
+        })
+        .flat_map(|target| {
+            let connection = self.portal_connections.get(target);
+            if connection.is_some() {
+                //let portal_id = self.portals.get(state.position).unwrap();
+                let dist = min(
+                    min(target.x, self.grid.width as isize - target.x), 
+                    min(target.y, self.grid.height as isize - target.y)
+                );
+                //debug!("Portal {:?} from edge for {:?}: {}", self.portals.get(target), target, dist);
 
-fn shortest_path(
-    from: Point, 
-    to: Point, 
-    map: &PlutoMap
-) -> Result<(usize, String), usize> {
-    let mut visited: HashSet<Point> = HashSet::new();
-    let mut queue: VecDeque<(Point, usize, String)> = VecDeque::new();
+                let recursion = if dist < 3 {
+                    state.recursion - 1
+                } else {
+                    state.recursion + 1
+                };
+                if recursion >= 0 && recursion <= 100 {
+                    Some(State::new(*connection.unwrap(), recursion))
+                } else {
+                    None
+                }
+            } else {
+                Some(State::new(*target, state.recursion))
+            }
+        }).collect()
+    }
+}
 
-    queue.push_back((from, 0, String::from("")));
+fn part2(map: &PlutoMap) {
+    let start = State::new(map.start, 0);
+    let finish = State::new(map.finish, 0);
+    println!("Routing from {:?} to {:?}", start, finish);
+    let (shortest, _) = shortest_path(start, finish, map).expect("No path found");
+    println!("Solution is {}", shortest);
+}
+
+//BFS
+fn shortest_path<G, S>(
+    from: S, 
+    to: S, 
+    map: &G
+) -> Result<(usize, S), usize> 
+where S : Clone + Eq + Hash + Debug,
+G : Neighbors<S>
+{
+    let mut visited: HashSet<S> = HashSet::new();
+    let mut queue: VecDeque<(S, usize)> = VecDeque::new();
+
+    queue.push_back((from, 0));
 
     while !queue.is_empty() {
-        let (point, distance, trace) = queue.pop_front().unwrap();
+        let (point, distance) = queue.pop_front().unwrap();
+        //debug!("at {:?} after {} steps", point, distance);
         
-        for (next_point, maybe_trace) in map.neighbors(point) {
+        for next_point in map.neighbors(point) {
             if next_point == to {
-                return Ok((distance + 1, trace));
+                return Ok((distance + 1, next_point));
             }
             if !visited.contains(&next_point) {
-                let next_trace = maybe_trace.map(|t| format!("{}{}", trace.clone(), t)).unwrap_or(trace.clone());
                 visited.insert(next_point.clone());
-                queue.push_back((next_point.clone(), distance + 1, next_trace));
+                queue.push_back((next_point.clone(), distance + 1));
             }
         }
     }
@@ -283,6 +347,7 @@ FG..#########.....#
             
         let map = PlutoMap::new(&Grid::from_str(&contents).unwrap());
         part1(&map);
+        part2(&map);
     }
 
 
@@ -333,4 +398,52 @@ YN......#               VT..#....QG
         let map = PlutoMap::new(&Grid::from_str(&contents).unwrap());
         part1(&map);
     }
+
+    #[test]
+    fn test_recursive_input() {
+        let env = Env::new().filter_or("RUST_LOG", "debug");
+        init_from_env(env);
+        let contents = 
+r#"             Z L X W       C                 
+             Z P Q B       K                 
+  ###########.#.#.#.#######.###############  
+  #...#.......#.#.......#.#.......#.#.#...#  
+  ###.#.#.#.#.#.#.#.###.#.#.#######.#.#.###  
+  #.#...#.#.#...#.#.#...#...#...#.#.......#  
+  #.###.#######.###.###.#.###.###.#.#######  
+  #...#.......#.#...#...#.............#...#  
+  #.#########.#######.#.#######.#######.###  
+  #...#.#    F       R I       Z    #.#.#.#  
+  #.###.#    D       E C       H    #.#.#.#  
+  #.#...#                           #...#.#  
+  #.###.#                           #.###.#  
+  #.#....OA                       WB..#.#..ZH
+  #.###.#                           #.#.#.#  
+CJ......#                           #.....#  
+  #######                           #######  
+  #.#....CK                         #......IC
+  #.###.#                           #.###.#  
+  #.....#                           #...#.#  
+  ###.###                           #.#.#.#  
+XF....#.#                         RF..#.#.#  
+  #####.#                           #######  
+  #......CJ                       NM..#...#  
+  ###.#.#                           #.###.#  
+RE....#.#                           #......RF
+  ###.###        X   X       L      #.#.#.#  
+  #.....#        F   Q       P      #.#.#.#  
+  ###.###########.###.#######.#########.###  
+  #.....#...#.....#.......#...#.....#.#...#  
+  #####.#.###.#######.#######.###.###.#.#.#  
+  #.......#.......#.#.#.#.#...#...#...#.#.#  
+  #####.###.#####.#.#.#.#.###.###.#.###.###  
+  #.......#.....#.#...#...............#...#  
+  #############.#.#.###.###################  
+               A O F   N                     
+               A A D   M                     "#;
+            
+        let map = PlutoMap::new(&Grid::from_str(&contents).unwrap());
+        part2(&map);
+    }
+    
 }
