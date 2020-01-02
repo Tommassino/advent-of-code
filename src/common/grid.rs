@@ -3,9 +3,9 @@ use std::fmt;
 use std::fmt::Display;
 use std::str::FromStr;
 use std::convert::Infallible;
+use std::hash::Hash;
 
-
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub struct Grid {
     pub data: Vec<Vec<char>>,
     pub width: usize,
@@ -23,6 +23,10 @@ impl Grid {
 
     pub fn get_unsafe(&self, x: usize, y: usize) -> char {
         self.data.get(y).map(|a| a.get(x).map(|c| *c)).flatten().unwrap_or(' ')
+    }
+
+    pub fn coordinates(&self) -> Vec<(usize, usize)> {
+        (0..self.width).flat_map(|x| (0..self.height).map(move |y| (x, y))).collect()
     }
 }
 

@@ -5,8 +5,8 @@ use env_logger;
 use std::time::Instant;
 
 mod common;
-mod day23;
-use day23::solve;
+mod day24;
+use day24::solve;
 
 fn main() {
     env_logger::init();
