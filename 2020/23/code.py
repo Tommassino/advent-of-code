@@ -20,6 +20,7 @@ class CupGame:
         self.current_cup = cups[0]
         self.max_cup = max(cups)
         self.debug = debug
+        self.picked_up = [None, None, None]
 
     def iter_from(self, cup):
         next_cup = self.cup_next[cup]
@@ -33,18 +34,19 @@ class CupGame:
 
     def tick(self):
         # self.log(f"cups: {list(self.iter_from(self.current_cup))}")
-        picked_up = list(islice(self.iter_from(self.current_cup), 3))
+        self.picked_up[0] = self.cup_next[self.current_cup]
+        self.picked_up[1] = self.cup_next[self.picked_up[0]]
+        self.picked_up[2] = self.cup_next[self.picked_up[1]]
         # self.log(f"pick up: {picked_up}")
         destination_cup = self.max_cup if self.current_cup == 1 else self.current_cup - 1
-        while destination_cup in picked_up:
+        while destination_cup in self.picked_up:
             destination_cup = self.max_cup if destination_cup == 1 else destination_cup - 1
         # self.log(f"destination: {destination_cup}")
         # pick up cups
-        self.cup_next[self.current_cup] = self.cup_next[picked_up[-1]]
+        self.cup_next[self.current_cup] = self.cup_next[self.picked_up[-1]]
         # place down picked up cups
-        after_destination = self.cup_next[destination_cup]
-        self.cup_next[destination_cup] = picked_up[0]
-        self.cup_next[picked_up[-1]] = after_destination
+        self.cup_next[self.picked_up[-1]] = self.cup_next[destination_cup]
+        self.cup_next[destination_cup] = self.picked_up[0]
 
         # move to the right
         self.current_cup = self.cup_next[self.current_cup]
