@@ -13,7 +13,7 @@ if __name__ == "__main__":
     code_file = os.path.join(day_folder, "code.py")
 
     with open(input_file, 'r') as input_file:
-        puzzle_input = input_file.read()
+        puzzle_input = input_file.read().rstrip("n")
 
     spec = importlib.util.spec_from_file_location("day", code_file)
     day_code = importlib.util.module_from_spec(spec)
