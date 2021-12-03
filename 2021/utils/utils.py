@@ -6,7 +6,7 @@ from typing import Tuple, Generator, Iterable, TypeVar
 
 T = TypeVar('T')
 
-def window(seq: Iterable[T], n: int=2) -> Generator[Tuple[T, ...]]:
+def window(seq: Iterable[T], n: int=2): # -> Generator[Tuple[T, ...]]:
     it = iter(seq)
     result = tuple(islice(it, n))
     if len(result) == n:
