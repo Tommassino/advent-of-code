@@ -79,86 +79,36 @@ digits = {
     9: set('abcdfg')
 }
 
-def resolve_encoding(signals):
-    # mapping from digit => signal (encoding)
-    encoding = {}
-    # mapping from signal idx => possible digits
-    assignments = {
-        i: set(range(10))
-        for i in range(10)
-    }
-    def assign_encoding():
-        to_delete = []
-        for idx, digits in assignments.items():
-            if len(digits) == 1:
-                digit = next(iter(digits))
-                encoding[digit] = signals[idx]
-                to_delete.append(idx)
-                # print(f"resolved {digit} ({idx}) = {encoding[digit]}")
-        for idx in to_delete:
-            del assignments[idx]
-        for idx in assignments:
-            assignments[idx].difference(to_delete)
-    
-    # resolve based on length
-    for i in assignments:
-        length = len(signals[i])
-        assignments[i] = assignments[i].intersection(
-            x
-            for x in digits
-            if length == len(digits[x])
+easy_digits = (1, 4, 7, 8)
+
+def signal_characteristics(signals, simple_signals):
+    return [
+        tuple(
+            len(signal.intersection(simple_signal))
+            for simple_signal in simple_signals
         )
-    assign_encoding()
+        for signal in signals
+    ]
 
-    def is_subset(digit, other_digit):
-        return digits[digit] <= digits[other_digit]
-    
-    for idx in assignments:
-        # for each candidate
-        # for each know digit
-        # if the known digit is a subset of the candidate
-        # the encodings have to be subsets too 
-        assignments[idx] = {
-            candidate_digit
-            for candidate_digit in assignments[idx]
-            if all(
-                digit_encoding <= signals[idx]
-                for known_digit, digit_encoding in encoding.items()
-                if is_subset(known_digit, candidate_digit)
-            )
-        }
-    assign_encoding()
+default_characteristics = dict(zip(
+    signal_characteristics(
+        digits.values(),
+        [digits[digit] for digit in easy_digits]
+    ),
+    digits.keys()
+))
 
-    for idx in assignments:
-        # for each candidate
-        # for each know digit
-        # if the known digit is not a subset of the candidate
-        # the encodings have to not be subsets too 
-        assignments[idx] = {
-            candidate_digit
-            for candidate_digit in assignments[idx]
-            if all(
-                not digit_encoding <= signals[idx]
-                for known_digit, digit_encoding in encoding.items()
-                if not is_subset(known_digit, candidate_digit)
-            )
-        }
-    assign_encoding()
-
-    # 2 and 5 will never be resolved using above rules...
-    # resolve 5 as a intersection
-    matching_encoding = encoding[6].intersection(encoding[9])
-    matching_idx = next(
-        idx
-        for idx, idx_encoding in enumerate(signals)
-        if matching_encoding == idx_encoding
-    )
-    assignments[matching_idx] = {5}
-    for idx in assignments:
-        if idx != matching_idx:
-            assignments[idx].discard(5)
-    assign_encoding()
-
-    if len(assignments) > 0:
-        raise ValueError()
-    return encoding
+def resolve_encoding(signals):
+    easy_signals = [
+        next(
+            signal
+            for signal in signals
+            if len(signal) == len(digits[digit])
+        )
+        for digit in easy_digits
+    ]
+    characteristics = signal_characteristics(signals, easy_signals)
+    return {
+        default_characteristics[characteristic]: signal
+        for characteristic, signal in zip(characteristics, signals)
+    }
