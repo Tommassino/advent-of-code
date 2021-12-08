@@ -37,10 +37,7 @@ def part_two(puzzle_input):
     )
 
 def resolve_output(unique_signals, output):
-    encoding = {
-        i: segments_for(unique_signals, i)
-        for i in range(10)
-    }
+    encoding = resolve_encoding(unique_signals)
     
     result = sum(
         next(filter(
@@ -82,51 +79,86 @@ digits = {
     9: set('abcdfg')
 }
 
-digit_lengths = {
-    digit: len(digits[digit])
-    for digit in range(10)
-}
-subset_digits = dict(filter(lambda x: len(x[1]) > 0, {
-    digit: [
-        other_digit
-        for other_digit in [1, 4, 7, 8] # only consider resolved digits
-        if digit != other_digit and digits[other_digit] <= digits[digit]
-    ]
-    for digit in range(10)
-}.items()))
+def resolve_encoding(signals):
+    # mapping from digit => signal (encoding)
+    encoding = {}
+    # mapping from signal idx => possible digits
+    assignments = {
+        i: set(range(10))
+        for i in range(10)
+    }
+    def assign_encoding():
+        to_delete = []
+        for idx, digits in assignments.items():
+            if len(digits) == 1:
+                digit = next(iter(digits))
+                encoding[digit] = signals[idx]
+                to_delete.append(idx)
+                # print(f"resolved {digit} ({idx}) = {encoding[digit]}")
+        for idx in to_delete:
+            del assignments[idx]
+        for idx in assignments:
+            assignments[idx].difference(to_delete)
+    
+    # resolve based on length
+    for i in assignments:
+        length = len(signals[i])
+        assignments[i] = assignments[i].intersection(
+            x
+            for x in digits
+            if length == len(digits[x])
+        )
+    assign_encoding()
 
-not_subset_digits = {
-    0: [4]
-}
-not_digits = {
-    6: [0, 9],
-    2: [3, 5]
-}
+    def is_subset(digit, other_digit):
+        return digits[digit] <= digits[other_digit]
+    
+    for idx in assignments:
+        # for each candidate
+        # for each know digit
+        # if the known digit is a subset of the candidate
+        # the encodings have to be subsets too 
+        assignments[idx] = {
+            candidate_digit
+            for candidate_digit in assignments[idx]
+            if all(
+                digit_encoding <= signals[idx]
+                for known_digit, digit_encoding in encoding.items()
+                if is_subset(known_digit, candidate_digit)
+            )
+        }
+    assign_encoding()
 
-def segments_for(unique_signals, digit):
-    def predicate_for(x):
-        if len(x) != digit_lengths[digit]:
-            return False
-        if digit in subset_digits:
-            for subset in subset_digits[digit]:
-                subset_segment = segments_for(unique_signals, subset)
-                if not subset_segment <= x:
-                    return False
-        if digit in not_subset_digits:
-            for not_subset in not_subset_digits[digit]:
-                not_subset_segment = segments_for(unique_signals, not_subset)
-                if not_subset_segment <= x:
-                    return False
-        if digit in not_digits:
-            for not_digit in not_digits[digit]:
-                not_segment = segments_for(unique_signals, not_digit)
-                if not_segment == x:
-                    return False
-        return True
+    for idx in assignments:
+        # for each candidate
+        # for each know digit
+        # if the known digit is not a subset of the candidate
+        # the encodings have to not be subsets too 
+        assignments[idx] = {
+            candidate_digit
+            for candidate_digit in assignments[idx]
+            if all(
+                not digit_encoding <= signals[idx]
+                for known_digit, digit_encoding in encoding.items()
+                if not is_subset(known_digit, candidate_digit)
+            )
+        }
+    assign_encoding()
 
-    if digit == 5:
-        return segments_for(unique_signals, 6).intersection(segments_for(unique_signals, 9))
-    filtered = list(filter(predicate_for, unique_signals))
-    if len(filtered) > 1:
+    # 2 and 5 will never be resolved using above rules...
+    # resolve 5 as a intersection
+    matching_encoding = encoding[6].intersection(encoding[9])
+    matching_idx = next(
+        idx
+        for idx, idx_encoding in enumerate(signals)
+        if matching_encoding == idx_encoding
+    )
+    assignments[matching_idx] = {5}
+    for idx in assignments:
+        if idx != matching_idx:
+            assignments[idx].discard(5)
+    assign_encoding()
+
+    if len(assignments) > 0:
         raise ValueError()
-    return filtered[0]
+    return encoding
