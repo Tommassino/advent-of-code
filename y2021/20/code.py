@@ -6,6 +6,7 @@ from y2021.utils import timed
 
 
 def run(puzzle_input):
+    visualize(puzzle_input)
     print(f"Part One : {part_one(puzzle_input)}")
     print(f"Part Two : {part_two(puzzle_input)}")
 
@@ -93,3 +94,45 @@ def part_two(puzzle_input: str):
         image = image.enhance(algorithm)
     # print(image)
     return len(image.coordinates)
+
+def visualize(puzzle_input: str):
+    import matplotlib.pyplot as plt
+    from matplotlib import animation
+    import numpy as np
+
+    algorithm, image_str = puzzle_input.split("\n\n")
+    algorithm = list(True if c == "#" else False for c in algorithm)
+    image = Image.from_str(image_str)
+
+    fig, ax = plt.subplots()
+    fig.set_size_inches(10, 10)
+    
+    num_frames = 501
+    margin = 4
+
+    tmp = image
+    for i in range(num_frames):
+        tmp = tmp.enhance(algorithm)
+    min_x, min_y, max_x, max_y = tmp.bounds()
+    min_x -= margin
+    max_x += margin
+    min_y -= margin
+    max_y += margin
+    trench_map = np.full((max_x - min_x + 1, max_y - min_y + 1), 0) #not image.polarity)
+    
+    def animate_step(frame):
+        nonlocal image
+        for map_x in range(max_x - min_x + 1):
+            for map_y in range(max_y - min_y + 1):
+                image_x = map_x + min_x
+                image_y = map_y + min_y
+                pixel_value = (image_x, image_y) in image.coordinates
+                trench_map[map_x, map_y] = pixel_value # != image.polarity
+        
+        ax.clear()
+        ax.set_axis_off()
+        ax.imshow(trench_map)
+        image = image.enhance(algorithm)
+
+    anim = animation.FuncAnimation(fig, animate_step, frames = num_frames, interval=100)
+    anim.save('map.gif')
