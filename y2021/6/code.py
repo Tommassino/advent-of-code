@@ -3,6 +3,7 @@
 # Date = December 2021
 from collections import Counter
 
+
 def run(puzzle_input):
     timers = list(map(int, puzzle_input.split(",")))
     total_fish = sum(day_n(80, timers).values())
@@ -10,6 +11,7 @@ def run(puzzle_input):
 
     print(f"Part One : {total_fish}")
     print(f"Part Two : {forever_fish}")
+
 
 def day_n(n, starting_timers):
     spawn_timer = Counter(starting_timers)

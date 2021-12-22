@@ -39,7 +39,7 @@ class BingoBoard:
             row.discard(move)
         for column in self.columns:
             column.discard(move)
-        
+
         for row in self.rows:
             if len(row) == 0:
                 return True

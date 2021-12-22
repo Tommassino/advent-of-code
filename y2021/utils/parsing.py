@@ -3,11 +3,14 @@ from dataclasses import dataclass
 import inspect
 import re
 
+
 def lines(input: str) -> List[str]:
     return input.split("\n")
 
+
 def numbers(input: List[str]) -> List[int]:
     return list(map(int, input))
+
 
 def re_group_parser(regex: str, datacls: dataclass) -> Callable[[str], dataclass]:
     pattern = re.compile(regex)

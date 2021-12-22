@@ -5,6 +5,7 @@
 from itertools import product
 from y2021.utils.parsing import lines
 
+
 def run(puzzle_input):
     parsed_input = parse_input(puzzle_input)
     position = [0, 0]
@@ -28,11 +29,13 @@ def run(puzzle_input):
     print(f"Part One : {part_one}")
     print(f"Part Two : {part_two}")
 
+
 def parse_input(puzzle_input):
     return [
         (direction(line.split(" ")[0]), int(line.split(" ")[1]))
         for line in lines(puzzle_input)
     ]
+
 
 def direction(value):
     if value == "forward":

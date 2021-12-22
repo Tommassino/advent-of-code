@@ -4,12 +4,10 @@
 
 from y2021.utils.utils import window
 
+
 def run(puzzle_input):
     puzzle_input = list(map(int, puzzle_input.split("\n")))
-    part_one = sum(
-        first < second
-        for first, second in window(puzzle_input)
-    )
+    part_one = sum(first < second for first, second in window(puzzle_input))
     print(f"Part One : {part_one}")
 
     part_two = sum(
