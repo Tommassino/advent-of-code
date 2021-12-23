@@ -26,7 +26,7 @@ class InitApp:
         self.config = config
 
     def initialize(self, year, day):
-        day_folder = os.path.join(self.config.base_folder, f"y{year}", str(day))
+        day_folder = os.path.join(self.config.base_folder, f"y{year}", f"d{day}")
         if not os.path.exists(day_folder):
             os.makedirs(day_folder)
         print(f"Creating template for day {year}/{day} in {day_folder}")
@@ -50,6 +50,8 @@ class InitApp:
         template = template.replace("{date}", self.config.date)
         with open(code_path, "w+") as output:
             output.write(template)
+        with open(os.path.join(day_folder, "__init__.py"), "w+") as output:
+            output.write("")
     
     def download_inputs(self, year, day, day_folder):
         if not self.config.download_input:
