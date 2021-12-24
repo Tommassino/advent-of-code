@@ -41,7 +41,7 @@ class AoCRunner:
         if year is None:
             year = self.config.default_year
 
-        day_folder = os.path.join(os.path.dirname(__file__), f"y{year}", str(day))
+        day_folder = os.path.join(os.path.dirname(__file__), f"y{year}", f"d{day}")
         if input is not None:
             input = os.path.join(day_folder, input)
         else:
@@ -61,7 +61,7 @@ class AoCRunner:
         doctest.testmod(module, verbose=True)
 
     def _get_module(self, day: int, year: int):
-        return importlib.import_module(f"y{year}.{day}.code")
+        return importlib.import_module(f"y{year}.d{day}.code")
 
 
 if __name__ == "__main__":
