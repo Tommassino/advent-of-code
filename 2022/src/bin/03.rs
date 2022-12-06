@@ -14,12 +14,11 @@ pub fn part_one(input: &str) -> Option<u32> {
                 None
             }
         }).next().unwrap();
-        let score = if misplaced.is_uppercase() {
+        if misplaced.is_uppercase() {
             misplaced as u32 - 'A' as u32 + 27
         } else {
             misplaced as u32 - 'a' as u32 + 1
-        };
-        score
+        }
     }).sum();
     Some(solution)
 }
@@ -29,17 +28,17 @@ pub fn part_two(input: &str) -> Option<u32> {
 
     let badges: Vec<char> = rucksacks.chunks(3).map(|chunks| {
         let mut common: HashSet<char> = HashSet::new();
-        for i in 0..3 {
+        for (i, item) in chunks.iter().enumerate().take(3) {
             if i == 0 {
-                chunks[i].chars().for_each(|x| {common.insert(x);});
+                item.chars().for_each(|x| {common.insert(x);});
             } else {
-                common.retain(|x| chunks[i].contains(*x));
+                common.retain(|x| item.contains(*x));
             }
         }
         if common.len() != 1 {
             panic!("Got more than one badge {:?}", common);
         }
-        common.iter().next().unwrap().clone()
+        *common.iter().next().unwrap()
     }).collect();
 
     let score = badges.iter().map(|x| {

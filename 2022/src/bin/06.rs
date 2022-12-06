@@ -1,14 +1,9 @@
+use itertools::Itertools;
+
 pub fn is_unique(data: &[char]) -> bool {
     data
-        .iter().enumerate()
-        .find(|(i, c)|{
-            data
-                .iter().enumerate()
-                .skip(i+1)
-                .find(|(_, other)| c == other)
-                .is_some()
-        })
-        .is_none()
+        .iter()
+        .all_unique()
 }
 
 pub fn part_one(input: &str) -> Option<usize> {

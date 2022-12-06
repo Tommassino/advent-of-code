@@ -1,5 +1,4 @@
-use std::collections::HashMap;
-use itertools::{Itertools, Position};
+use itertools::Itertools;
 use regex::Regex;
 
 pub fn parse(input: &str, stacks: &mut Vec<Vec<char>>) -> Vec<(usize, usize, usize)> {
@@ -18,12 +17,12 @@ pub fn parse(input: &str, stacks: &mut Vec<Vec<char>>) -> Vec<(usize, usize, usi
     }).collect();
 
     let stack_count = (stacks_str.lines().last().unwrap().len() + 1) / 4;
-    for i in 0..=stack_count {
+    for _ in 0..=stack_count {
         stacks.push(Vec::new());
     }
 
     stacks_str.lines().rev()
-        .filter(|x| !x.chars().nth(1).unwrap().is_digit(10))
+        .filter(|x| !x.chars().nth(1).unwrap().is_ascii_digit())
         .for_each(|line| {
             line.chars().enumerate().for_each(|(pos, c)| {
                 if c.is_alphanumeric() {
@@ -41,7 +40,7 @@ pub fn part_one(input: &str) -> Option<String> {
     let instructions = parse(input, &mut stacks);
     println!("{:?}\n{:?}", stacks, instructions);
     instructions.iter().for_each(|(count, from, to)| {
-        for i in 0..*count {
+        for _ in 0..*count {
             let thing = stacks[*from].pop().unwrap();
             println!("popping {:?} from {:?} to {:?}", thing, from, to);
             stacks[*to].push(thing);
@@ -58,7 +57,7 @@ pub fn part_two(input: &str) -> Option<String> {
     println!("{:?}\n{:?}", stacks, instructions);
     instructions.iter().for_each(|(count, from, to)| {
         let mut crane_black_hole: Vec<char> = Vec::new();
-        for i in 0..*count {
+        for _ in 0..*count {
             let thing = stacks[*from].pop().unwrap();
             crane_black_hole.push(thing);
         }

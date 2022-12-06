@@ -50,17 +50,13 @@ pub fn part_one(input: &str) -> Option<u32> {
 
     let score = parsed.iter()
         .map(
-            |x| {
-                match x {
-                    (first, second) => {
-                        if first == second {
-                            3 + (*second as u32) + 1
-                        } else if second.is_winner(first) {
-                            6 + (*second as u32) + 1
-                        } else {
-                            (*second as u32) + 1
-                        }
-                    }
+            |(first, second)| {
+                if first == second {
+                    3 + (*second as u32) + 1
+                } else if second.is_winner(first) {
+                    6 + (*second as u32) + 1
+                } else {
+                    (*second as u32) + 1
                 }
             }
         ).sum();
@@ -76,7 +72,7 @@ pub fn part_two(input: &str) -> Option<u32> {
                 let second_move =
                     match outcome {
                         'X' => Move::from((first_move as i8 - 1) % 3),
-                        'Y' => first_move.clone(),
+                        'Y' => first_move,
                         'Z' => Move::from((first_move as i8 + 1) % 3),
                         _ => panic!("Unknown outcome {}", outcome)
                     };
@@ -87,17 +83,13 @@ pub fn part_two(input: &str) -> Option<u32> {
     debug!("Parsed input maybe {:?}", parsed);
     let score = parsed.iter()
         .map(
-            |x| {
-                match x {
-                    (first, second) => {
-                        if first == second {
-                            3 + (*second as u32) + 1
-                        } else if second.is_winner(first) {
-                            6 + (*second as u32) + 1
-                        } else {
-                            (*second as u32) + 1
-                        }
-                    }
+            |(first, second)| {
+                if first == second {
+                    3 + (*second as u32) + 1
+                } else if second.is_winner(first) {
+                    6 + (*second as u32) + 1
+                } else {
+                    (*second as u32) + 1
                 }
             }
         ).sum();
@@ -117,13 +109,13 @@ mod tests {
 
     #[test]
     fn test_part_one() {
-        let input = aoc::read_file("examples", 2);
+        let input = advent_of_code::read_file("examples", 2);
         assert_eq!(part_one(&input), Some(15));
     }
 
     #[test]
     fn test_part_two() {
-        let input = aoc::read_file("examples", 2);
+        let input = advent_of_code::read_file("examples", 2);
         assert_eq!(part_two(&input), Some(12));
     }
 

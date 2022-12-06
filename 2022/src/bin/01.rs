@@ -1,5 +1,3 @@
-use log::info;
-
 pub fn part_one(input: &str) -> Option<u32> {
     let elf_caloric_cache: u32 = input.split("\n\n").map(|elf_info| {
         elf_info.lines().map(|x| x.parse::<u32>().unwrap()).sum()
@@ -35,6 +33,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let input = advent_of_code::read_file("examples", 1);
-        assert_eq!(part_two(&input), None);
+        assert_eq!(part_two(&input), Some(45000));
     }
 }
