@@ -52,7 +52,7 @@ pub fn part_two(input: &str) -> Option<u32> {
 }
 
 fn main() {
-    let input = &advent_of_code::read_file("inputs", 3);
+    let input = &advent_of_code::read_file("inputs", 3, None);
     advent_of_code::solve!(1, part_one, input);
     advent_of_code::solve!(2, part_two, input);
 }
@@ -63,13 +63,13 @@ mod tests {
 
     #[test]
     fn test_part_one() {
-        let input = advent_of_code::read_file("examples", 3);
+        let input = advent_of_code::read_file("examples", 3, None);
         assert_eq!(part_one(&input), Some(157));
     }
 
     #[test]
     fn test_part_two() {
-        let input = advent_of_code::read_file("examples", 3);
+        let input = advent_of_code::read_file("examples", 3, None);
         assert_eq!(part_two(&input), Some(70));
     }
 }

@@ -41,10 +41,16 @@ macro_rules! solve {
     }};
 }
 
-pub fn read_file(folder: &str, day: u8) -> String {
+pub fn read_file(folder: &str, day: u8, version: Option<&str>) -> String {
     let cwd = env::current_dir().unwrap();
 
-    let filepath = cwd.join("src").join(folder).join(format!("{:02}.txt", day));
+    let filename = if version.is_none() {
+        format!("{:02}.txt", day)
+    } else {
+        format!("{:02}_{}.txt", day, version.unwrap())
+    };
+
+    let filepath = cwd.join("src").join(folder).join(filename);
 
     let f = fs::read_to_string(filepath);
     f.expect("could not open input file")
