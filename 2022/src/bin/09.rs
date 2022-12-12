@@ -12,7 +12,7 @@ use itertools::{Itertools};
 
 use advent_of_code::helpers::Point2;
 
-pub fn get_direction(dir: &str) -> Point2 {
+pub fn get_direction(dir: &str) -> Point2<i32> {
     match dir {
         "R" => Point2 { x: 1, y: 0 },
         "L" => Point2 { x: -1, y: 0 },
@@ -23,7 +23,7 @@ pub fn get_direction(dir: &str) -> Point2 {
 }
 
 pub fn part_one(input: &str) -> Option<usize> {
-    let mut tail_positions: HashSet<Point2> = HashSet::new();
+    let mut tail_positions: HashSet<Point2<i32>> = HashSet::new();
     let mut head = Point2 { x: 0, y: 0 };
     let mut tail = Point2 { x: 0, y: 0 };
     input.lines().for_each(|line| {
@@ -48,8 +48,8 @@ pub fn part_one(input: &str) -> Option<usize> {
 }
 
 pub fn part_two(input: &str) -> Option<usize> {
-    let mut tail_positions: HashSet<Point2> = HashSet::new();
-    let mut rope_knots: Vec<Point2> = (0..10).map(|_| Point2 { x: 0, y: 0 }).collect();
+    let mut tail_positions: HashSet<Point2<i32>> = HashSet::new();
+    let mut rope_knots: Vec<Point2<i32>> = (0..10).map(|_| Point2 { x: 0, y: 0 }).collect();
     input.lines().for_each(|line| {
         let (direction_str, amount_str) = line.split(' ').next_tuple().unwrap();
         let amount = amount_str.parse::<u32>().unwrap();
@@ -76,7 +76,7 @@ pub fn part_two(input: &str) -> Option<usize> {
 
 #[derive(Debug)]
 struct Day9Animation {
-    rope_positions: Vec<Vec<Point2>>,
+    rope_positions: Vec<Vec<Point2<i32>>>,
     block_size: u32,
     knot_size: (u32, u32),
     image_size: (u32, u32),
@@ -85,8 +85,8 @@ struct Day9Animation {
 
 impl Day9Animation {
     pub fn parse(input: &str) -> Day9Animation {
-        let mut rope_positions: Vec<Vec<Point2>> = Vec::new();
-        let mut rope_knots: Vec<Point2> = (0..10).map(|_| Point2 { x: 0, y: 0 }).collect();
+        let mut rope_positions: Vec<Vec<Point2<i32>>> = Vec::new();
+        let mut rope_knots: Vec<Point2<i32>> = (0..10).map(|_| Point2 { x: 0, y: 0 }).collect();
         input.lines().for_each(|line| {
             let (direction_str, amount_str) = line.split(' ').next_tuple().unwrap();
             let amount = amount_str.parse::<u32>().unwrap();
@@ -114,7 +114,7 @@ impl Day9Animation {
             .map(
                 |knots| {
                     let head = knots.first().unwrap();
-                    let offsets: Vec<Point2> = knots.iter().skip(1).map(|p| *p - *head).collect();
+                    let offsets: Vec<Point2<i32>> = knots.iter().skip(1).map(|p| *p - *head).collect();
                     let (min_x, max_x) = offsets.iter().map(|p| p.x)
                         .minmax().into_option().unwrap();
                     let (min_y, max_y) = offsets.iter().map(|p| p.y)
@@ -141,7 +141,7 @@ impl Day9Animation {
         }
     }
 
-    pub fn map_point(&self, point: Point2, head: Point2) -> (f32, f32) {
+    pub fn map_point(&self, point: Point2<i32>, head: Point2<i32>) -> (f32, f32) {
         let translated = point - head;
         (
             (translated.x * self.block_size as i32 + self.image_size.0 as i32 / 2) as f32,
