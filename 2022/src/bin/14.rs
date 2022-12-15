@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::fmt::{Debug, Formatter};
 use std::str::FromStr;
 use advent_of_code::helpers::Point2;
@@ -50,7 +50,7 @@ impl Debug for Grid{
             .minmax()
             .into_option()
             .unwrap();
-        let (min_y, max_y) = self.rocks.iter().map(|p| p.y)
+        let (_, max_y) = self.rocks.iter().map(|p| p.y)
             .minmax()
             .into_option()
             .unwrap();
