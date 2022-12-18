@@ -136,7 +136,7 @@ impl CaveSystem {
             path.pop();
             // println!("Current best from path {:?}: {:?}", path, rec_result);
         }
-        return (best, best_path);
+        (best, best_path)
     }
 }
 
@@ -148,7 +148,7 @@ pub fn part_one(input: &str) -> Option<i64> {
 }
 
 pub fn part_two(input: &str) -> Option<i64> {
-    let cave_system = CaveSystem::from_str(input).expect("");
+    let _cave_system = CaveSystem::from_str(input).expect("");
     Some(0)
 }
 
