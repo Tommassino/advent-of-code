@@ -1,0 +1,26 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Test
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.7.12'
+          architecture: 'x64'
+      - name: Core requirements
+        run: pip install -r requirements.txt
+      - name: Yearly requirements
+        run: pip install -r y2021/requirements.txt
+      - name: Doctests
+        run: py.test --doctest-modules --ignore=y2018 --ignore=y2020 --ignore=2019
