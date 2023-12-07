@@ -23,11 +23,6 @@ struct Hand<Part> {
     phantom: PhantomData<Part>,
 }
 
-pub trait CardValue {
-    fn card_values(&self) -> [u32; 5];
-    fn suit_count(&self) -> (u32, u32);
-}
-
 impl<Part> From<&str> for Hand<Part> {
     fn from(value: &str) -> Self {
         let (cards_str, bid_str) = value.split_once(' ').unwrap();
@@ -40,7 +35,24 @@ impl<Part> From<&str> for Hand<Part> {
         }
     }
 }
-impl<Part> Hand<Part> {
+impl<Part> Hand<Part>
+where
+    Hand<Part>: CardValue,
+{
+    fn strength(&self) -> HandType {
+        match self.suit_count() {
+            (0, 5) => HandType::FiveOfAKind,
+            (1, 5) => HandType::FiveOfAKind,
+            (2, 4) => HandType::FourOfAKind,
+            (2, 3) => HandType::FullHouse,
+            (3, 3) => HandType::ThreeOfAKind,
+            (3, 2) => HandType::TwoPairs,
+            (4, 2) => HandType::OnePair,
+            (5, 1) => HandType::HighCard,
+            _ => panic!("Invalid hand"),
+        }
+    }
+
     pub fn suits(&self) -> HashMap<char, u32> {
         let mut suits = HashMap::<char, u32>::new();
         self.cards.iter().for_each(|card| {
@@ -53,16 +65,23 @@ impl<Part> Hand<Part> {
         suits
     }
 }
+
+pub trait CardValue {
+    fn card_values(&self) -> u32;
+    fn suit_count(&self) -> (u32, u32);
+}
+
 impl CardValue for Hand<PartOne> {
-    fn card_values(&self) -> [u32; 5] {
-        self.cards.map(|char| match char {
+    fn card_values(&self) -> u32 {
+        let card_values = self.cards.map(|char| match char {
             'T' => 10,
             'J' => 11,
             'Q' => 12,
             'K' => 13,
             'A' => 14,
             _ => char.to_digit(10).unwrap(),
-        })
+        });
+        card_values.iter().enumerate().map(|(idx, val)| val << (20 - idx * 4)).sum()
     }
 
     fn suit_count(&self) -> (u32, u32) {
@@ -74,15 +93,16 @@ impl CardValue for Hand<PartOne> {
 }
 
 impl CardValue for Hand<PartTwo> {
-    fn card_values(&self) -> [u32; 5] {
-        self.cards.map(|char| match char {
+    fn card_values(&self) -> u32 {
+        let card_values = self.cards.map(|char| match char {
             'T' => 10,
             'J' => 1,
             'Q' => 12,
             'K' => 13,
             'A' => 14,
             _ => char.to_digit(10).unwrap(),
-        })
+        });
+        card_values.iter().enumerate().map(|(idx, val)| val << (20 - idx * 4)).sum()
     }
 
     fn suit_count(&self) -> (u32, u32) {
@@ -107,34 +127,12 @@ impl<Part> From<&str> for CamelCards<Part> {
     }
 }
 
-impl<Part> Hand<Part>
-where
-    Hand<Part>: CardValue,
-{
-    fn strength(&self) -> HandType
-    where
-        Hand<Part>: CardValue,
-    {
-        match self.suit_count() {
-            (0, 5) => HandType::FiveOfAKind,
-            (1, 5) => HandType::FiveOfAKind,
-            (2, 4) => HandType::FourOfAKind,
-            (2, 3) => HandType::FullHouse,
-            (3, 3) => HandType::ThreeOfAKind,
-            (3, 2) => HandType::TwoPairs,
-            (4, 2) => HandType::OnePair,
-            (5, 1) => HandType::HighCard,
-            _ => panic!("Invalid hand"),
-        }
-    }
-}
-
 impl<Part> CamelCards<Part>
 where
     Hand<Part>: CardValue,
 {
     pub fn solve(&mut self) -> u32 {
-        self.hands.sort_by_key(|hand| {
+        self.hands.sort_by_cached_key(|hand| {
             let card_values = hand.card_values();
             let strength = hand.strength();
             (strength, card_values)
