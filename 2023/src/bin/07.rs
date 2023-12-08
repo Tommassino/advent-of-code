@@ -81,7 +81,11 @@ impl CardValue for Hand<PartOne> {
             'A' => 14,
             _ => char.to_digit(10).unwrap(),
         });
-        card_values.iter().enumerate().map(|(idx, val)| val << (20 - idx * 4)).sum()
+        card_values
+            .iter()
+            .enumerate()
+            .map(|(idx, val)| val << (20 - idx * 4))
+            .sum()
     }
 
     fn suit_count(&self) -> (u32, u32) {
@@ -102,7 +106,11 @@ impl CardValue for Hand<PartTwo> {
             'A' => 14,
             _ => char.to_digit(10).unwrap(),
         });
-        card_values.iter().enumerate().map(|(idx, val)| val << (20 - idx * 4)).sum()
+        card_values
+            .iter()
+            .enumerate()
+            .map(|(idx, val)| val << (20 - idx * 4))
+            .sum()
     }
 
     fn suit_count(&self) -> (u32, u32) {
