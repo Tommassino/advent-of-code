@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 advent_of_code::solution!(14);
 
