@@ -27,9 +27,9 @@ impl Direction {
     ) -> Option<(usize, usize)> {
         match self {
             Direction::Up => y.checked_sub(distance).map(|ny| (x, ny)),
-            Direction::Down => (y + distance < height).then(|| (x, y + distance)),
+            Direction::Down => (y + distance < height).then_some((x, y + distance)),
             Direction::Left => x.checked_sub(distance).map(|nx| (nx, y)),
-            Direction::Right => (x + distance < width).then(|| (x + distance, y)),
+            Direction::Right => (x + distance < width).then_some((x + distance, y)),
         }
     }
 
