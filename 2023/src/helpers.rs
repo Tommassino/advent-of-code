@@ -3,6 +3,7 @@
  * Example import from this file: `use advent_of_code::helpers::example_fn;`.
  */
 
+use num::{CheckedAdd, CheckedSub, One};
 use std::ops::{Add, AddAssign, Mul, Sub, SubAssign};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
@@ -61,6 +62,36 @@ impl<T: Mul<f32, Output = T>> Mul<f32> for Point2<T> {
             x: self.x * rhs,
             y: self.y * rhs,
         }
+    }
+}
+
+impl<T> Point2<T>
+where
+    T: CheckedSub<Output = T> + CheckedAdd<Output = T> + Copy + One + PartialOrd,
+{
+    pub fn neighbors(&self, width: T, height: T) -> Vec<Point2<T>> {
+        let mut vec = Vec::new();
+        self.x.checked_sub(&T::one()).iter().for_each(|x| {
+            vec.push(Point2::new(*x, self.y));
+        });
+        self.x
+            .checked_add(&T::one())
+            .filter(|x| *x < width)
+            .iter()
+            .for_each(|x| {
+                vec.push(Point2::new(*x, self.y));
+            });
+        self.y.checked_sub(&T::one()).iter().for_each(|y| {
+            vec.push(Point2::new(self.x, *y));
+        });
+        self.y
+            .checked_add(&T::one())
+            .filter(|y| *y < height)
+            .iter()
+            .for_each(|y| {
+                vec.push(Point2::new(self.x, *y));
+            });
+        vec
     }
 }
 
