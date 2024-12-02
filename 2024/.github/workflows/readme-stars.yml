@@ -2,14 +2,12 @@ name: Update readme ⭐️ progress
 
 on:
     # !Please set a different minute than 51 if you enable this!
-    schedule:
-        - cron: "13 */6 * * *" # Every 6 hours
+    # schedule:
+    #     - cron: "51 */6 * * *" # Every 6 hours
     workflow_dispatch:
 
 jobs:
     update-readme:
-        # Disable when out of season
-        #        when: never
         runs-on: ubuntu-latest
         if: ${{ vars.AOC_ENABLED == 'true' }}
         permissions:
@@ -21,7 +19,6 @@ jobs:
                   userId: ${{ secrets.AOC_USER_ID }}
                   sessionCookie: ${{ secrets.AOC_SESSION }}
                   year: ${{ secrets.AOC_YEAR }}
-                  readmeLocation: "2024/README.md"
             - uses: stefanzweifel/git-auto-commit-action@v5
               with:
                   commit_message: "update readme progress"

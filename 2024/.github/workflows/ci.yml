@@ -24,13 +24,10 @@ jobs:
                 key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
                 restore-keys: ${{ runner.os }}-cargo-
             - name: cargo test
-              working-directory: ./2024
               run: cargo test
-#             uncomment to enable clippy linter
-            - name: cargo clippy
-              working-directory: ./2024
-              run: cargo clippy -- -D warnings
-#             uncomment to enable format linter
-            - name: cargo fmt
-              working-directory: ./2024
-              run: cargo fmt --check
+            # uncomment to enable clippy linter
+            # - name: cargo clippy
+            #   run: cargo clippy -- -D warnings
+            # uncomment to enable format linter
+            # - name: cargo fmt
+            #   run: cargo fmt --check

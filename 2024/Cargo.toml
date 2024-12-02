@@ -1,0 +1,20 @@
+[package]
+name = "advent_of_code"
+version = "0.9.3"
+authors = ["Tomas Witzany <witzatom@users.noreply.github.com>"]
+edition = "2021"
+default-run = "advent_of_code"
+publish = false
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+doctest = false
+
+[features]
+test_lib = []
+
+[dependencies]
+pico-args = "0.5.0"
+itertools = "0.13.0"
+regex = "1.10.2"
+num = "0.4.1"
