@@ -3,13 +3,24 @@
  * Example import from this file: `use advent_of_code::helpers::example_fn;`.
  */
 
-use num::{CheckedAdd, CheckedSub, One};
+use num::{CheckedAdd, CheckedSub, One, Zero};
 use std::ops::{Add, AddAssign, Mul, Sub, SubAssign};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct Point2<T> {
     pub x: T,
     pub y: T,
+}
+
+pub enum Direction {
+    North,
+    South,
+    East,
+    West,
+    NorthEast,
+    NorthWest,
+    SouthEast,
+    SouthWest,
 }
 
 impl<T> Point2<T> {
@@ -67,31 +78,66 @@ impl<T: Mul<f32, Output = T>> Mul<f32> for Point2<T> {
 
 impl<T> Point2<T>
 where
-    T: CheckedSub<Output = T> + CheckedAdd<Output = T> + Copy + One + PartialOrd,
+    T: CheckedSub<Output = T> + CheckedAdd<Output = T> + Copy + Zero + One + PartialOrd,
 {
-    pub fn neighbors(&self, width: T, height: T) -> Vec<Point2<T>> {
-        let mut vec = Vec::new();
-        self.x.checked_sub(&T::one()).iter().for_each(|x| {
-            vec.push(Point2::new(*x, self.y));
-        });
-        self.x
-            .checked_add(&T::one())
-            .filter(|x| *x < width)
-            .iter()
-            .for_each(|x| {
-                vec.push(Point2::new(*x, self.y));
-            });
-        self.y.checked_sub(&T::one()).iter().for_each(|y| {
-            vec.push(Point2::new(self.x, *y));
-        });
-        self.y
-            .checked_add(&T::one())
-            .filter(|y| *y < height)
-            .iter()
-            .for_each(|y| {
-                vec.push(Point2::new(self.x, *y));
-            });
-        vec
+    pub fn neighbors_checked(&self, width: T, height: T) -> Vec<Point2<T>> {
+        [
+            (Some(self.x), self.y.checked_sub(&T::one())),
+            (Some(self.x), self.y.checked_add(&T::one())),
+            (self.x.checked_sub(&T::one()), Some(self.y)),
+            (self.x.checked_add(&T::one()), Some(self.y)),
+        ]
+        .iter()
+        .filter_map(|(x, y)| {
+            x.filter(|&x| x >= T::zero() && x < width).and_then(|x| {
+                y.filter(|&y| y >= T::zero() && y < height)
+                    .map(|y| Point2::new(x, y))
+            })
+        })
+        .collect()
+    }
+
+    pub fn neighbors(&self) -> Vec<Point2<T>> {
+        [
+            (Some(self.x), self.y.checked_sub(&T::one())),
+            (Some(self.x), self.y.checked_add(&T::one())),
+            (self.x.checked_sub(&T::one()), Some(self.y)),
+            (self.x.checked_add(&T::one()), Some(self.y)),
+        ]
+        .iter()
+        .filter_map(|(x, y)| x.and_then(|x| y.map(|y| Point2::new(x, y))))
+        .collect()
+    }
+
+    pub fn neighbors_with_diagonal(&self) -> Vec<Point2<T>> {
+        [
+            (Some(self.x), self.y.checked_sub(&T::one())),
+            (Some(self.x), self.y.checked_add(&T::one())),
+            (self.x.checked_sub(&T::one()), Some(self.y)),
+            (self.x.checked_add(&T::one()), Some(self.y)),
+            (self.x.checked_sub(&T::one()), self.y.checked_sub(&T::one())),
+            (self.x.checked_add(&T::one()), self.y.checked_sub(&T::one())),
+            (self.x.checked_sub(&T::one()), self.y.checked_add(&T::one())),
+            (self.x.checked_add(&T::one()), self.y.checked_add(&T::one())),
+        ]
+        .iter()
+        .filter_map(|(x, y)| x.and_then(|x| y.map(|y| Point2::new(x, y))))
+        .collect()
+    }
+}
+
+impl Point2<i32> {
+    pub fn neighbor(&self, direction: Direction) -> Point2<i32> {
+        match direction {
+            Direction::North => Point2::new(self.x, self.y - 1),
+            Direction::South => Point2::new(self.x, self.y + 1),
+            Direction::East => Point2::new(self.x + 1, self.y),
+            Direction::West => Point2::new(self.x - 1, self.y),
+            Direction::NorthEast => Point2::new(self.x + 1, self.y - 1),
+            Direction::NorthWest => Point2::new(self.x - 1, self.y - 1),
+            Direction::SouthEast => Point2::new(self.x + 1, self.y + 1),
+            Direction::SouthWest => Point2::new(self.x - 1, self.y + 1),
+        }
     }
 }
 
@@ -157,5 +203,34 @@ impl<T: Mul<f32, Output = T>> Mul<f32> for Point3<T> {
             y: self.y * rhs,
             z: self.z * rhs,
         }
+    }
+}
+
+mod tests {
+    #[test]
+    fn test_neighbors() {
+        use super::Point2;
+        let point = Point2::new(1, 1);
+        let neighbors = point.neighbors_checked(3, 3);
+        assert_eq!(neighbors.len(), 4);
+        assert!(neighbors.contains(&Point2::new(0, 1)));
+        assert!(neighbors.contains(&Point2::new(1, 0)));
+        assert!(neighbors.contains(&Point2::new(2, 1)));
+        assert!(neighbors.contains(&Point2::new(1, 2)));
+    }
+    #[test]
+    fn test_neighbors_diagonals() {
+        use super::Point2;
+        let point = Point2::new(1, 1);
+        let neighbors = point.neighbors_diagonals(3, 3);
+        assert_eq!(neighbors.len(), 8);
+        assert!(neighbors.contains(&Point2::new(0, 0)));
+        assert!(neighbors.contains(&Point2::new(0, 1)));
+        assert!(neighbors.contains(&Point2::new(0, 2)));
+        assert!(neighbors.contains(&Point2::new(1, 0)));
+        assert!(neighbors.contains(&Point2::new(1, 2)));
+        assert!(neighbors.contains(&Point2::new(2, 0)));
+        assert!(neighbors.contains(&Point2::new(2, 1)));
+        assert!(neighbors.contains(&Point2::new(2, 2)));
     }
 }

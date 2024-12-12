@@ -8,10 +8,7 @@ struct Input {
 
 impl From<&str> for Input {
     fn from(s: &str) -> Self {
-        let stones = s
-            .split_whitespace()
-            .map(|s| s.parse().unwrap())
-            .collect();
+        let stones = s.split_whitespace().map(|s| s.parse().unwrap()).collect();
         Self { stones }
     }
 }

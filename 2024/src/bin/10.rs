@@ -36,7 +36,7 @@ impl TopographicMap {
                 peaks_reached.insert(next);
                 continue;
             }
-            let neighbors = next.neighbors(self.width, self.height);
+            let neighbors = next.neighbors_checked(self.width, self.height);
             for neighbor in neighbors {
                 let neighbor_height = self.map[neighbor.y][neighbor.x];
                 if neighbor_height == height + 1 {
@@ -56,7 +56,7 @@ impl TopographicMap {
                 peaks_reached += 1;
                 continue;
             }
-            let neighbors = next.neighbors(self.width, self.height);
+            let neighbors = next.neighbors_checked(self.width, self.height);
             for neighbor in neighbors {
                 let neighbor_height = self.map[neighbor.y][neighbor.x];
                 if neighbor_height == height + 1 {
