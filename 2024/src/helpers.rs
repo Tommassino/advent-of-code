@@ -76,6 +76,17 @@ impl<T: Mul<f32, Output = T>> Mul<f32> for Point2<T> {
     }
 }
 
+impl<T: Mul<usize, Output = T>> Mul<usize> for Point2<T> {
+    type Output = Point2<T>;
+
+    fn mul(self, rhs: usize) -> Self::Output {
+        Self {
+            x: self.x * rhs,
+            y: self.y * rhs,
+        }
+    }
+}
+
 impl<T> Point2<T>
 where
     T: CheckedSub<Output = T> + CheckedAdd<Output = T> + Copy + Zero + One + PartialOrd,

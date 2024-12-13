@@ -3,7 +3,6 @@ use std::collections::{HashSet, VecDeque};
 use std::fmt::Display;
 advent_of_code::solution!(12);
 
-
 #[derive(Debug)]
 struct Grid {
     data: Vec<Vec<char>>,
@@ -137,9 +136,7 @@ impl Plot {
             //convex corners
             total_corners += match self.neighbors_in_plot(point) {
                 0 => 4, // special case where its a single point plot
-                1 => {
-                    2
-                } // a single block pointing out
+                1 => 2, // a single block pointing out
                 2 => {
                     // check that its not a | or -
                     if north && south || east && west {
