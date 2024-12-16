@@ -7,7 +7,7 @@ use num::{CheckedAdd, CheckedSub, One, Zero};
 use std::fmt::{Display, Formatter};
 use std::ops::{Add, AddAssign, Mul, Sub, SubAssign};
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Ord, PartialOrd)]
 pub struct Point2<T> {
     pub x: T,
     pub y: T,
@@ -19,6 +19,7 @@ impl<T: Display> Display for Point2<T> {
     }
 }
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Ord, PartialOrd)]
 pub enum Direction {
     North,
     South,
