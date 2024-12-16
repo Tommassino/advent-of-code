@@ -65,21 +65,13 @@ impl<T: SubAssign> SubAssign for Point2<T> {
     }
 }
 
-impl<T: Mul<f32, Output = T>> Mul<f32> for Point2<T> {
+impl<T: Mul<T, Output = T>> Mul<T> for Point2<T>
+where
+    T: Mul<T> + Copy,
+{
     type Output = Point2<T>;
 
-    fn mul(self, rhs: f32) -> Self::Output {
-        Self {
-            x: self.x * rhs,
-            y: self.y * rhs,
-        }
-    }
-}
-
-impl<T: Mul<usize, Output = T>> Mul<usize> for Point2<T> {
-    type Output = Point2<T>;
-
-    fn mul(self, rhs: usize) -> Self::Output {
+    fn mul(self, rhs: T) -> Self::Output {
         Self {
             x: self.x * rhs,
             y: self.y * rhs,
