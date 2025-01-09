@@ -234,10 +234,7 @@ impl Maze {
                 }
 
                 if new_distance <= current_distance {
-                    previous
-                        .entry(next_node)
-                        .or_default()
-                        .push(current_node);
+                    previous.entry(next_node).or_default().push(current_node);
                 }
             }
         }
@@ -248,7 +245,6 @@ impl Maze {
             .min()
             .cloned()
             .unwrap();
-
 
         let mut best_paths = Vec::new();
         let mut backtrace_stack = VecDeque::new();
