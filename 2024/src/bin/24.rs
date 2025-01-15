@@ -252,6 +252,8 @@ pub fn part_two(input: &str) -> Option<String> {
     alu.swap("hqh", "z38");
     alu.swap("pvb", "qdq");
     alu.to_graphviz();
+    // suspicious gates output is almost correct, start with z-nodes that are not xor,
+    // look in the bit-layer whether there is some XOR gate in the middle and swap, then rerun
     for gate in &alu.suspicious_gates() {
         println!("{}: {:?}", gate, alu.nodes.get(gate));
     }
